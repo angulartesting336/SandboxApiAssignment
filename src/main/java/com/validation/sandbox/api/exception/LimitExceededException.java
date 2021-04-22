@@ -9,11 +9,18 @@ public class LimitExceededException extends RuntimeException {
 
 	private String signatureCertificate;
 
-	public LimitExceededException(PaymentRejectedResponse paymentRejectedResponse, String signatureCertificate) {
+	private String signature;
+
+	private String xRequestId;
+
+	public LimitExceededException(PaymentRejectedResponse paymentRejectedResponse, String signatureCertificate,
+			String signature, String xRequestId) {
 
 		super();
 		this.paymentRejectedResponse = paymentRejectedResponse;
+		this.signature = signature;
 		this.signatureCertificate = signatureCertificate;
+		this.xRequestId = xRequestId;
 	}
 
 	public PaymentRejectedResponse getPaymentRejectedResponse() {
@@ -22,6 +29,14 @@ public class LimitExceededException extends RuntimeException {
 
 	public String getSignatureCertificate() {
 		return signatureCertificate;
+	}
+
+	public String getSignature() {
+		return signature;
+	}
+
+	public String getXRequestId() {
+		return xRequestId;
 	}
 
 }

@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.validation.sandbox.api.model.PaymentAcceptedResponse;
 import com.validation.sandbox.api.model.PaymentInitiationRequest;
 import com.validation.sandbox.api.service.SandboxValidationService;
+import com.validation.sandbox.api.util.SandboxValidationConstant.Headers;
 
 @RestController
 @RequestMapping(value = "/paymentValidation")
@@ -35,20 +36,20 @@ public class SandboxValidationController {
 	String SHA_CONSTANT = "SHA256withRSA";
 
 	@PostMapping(value = "/v1.0.0/initiate-payment")
-	public ResponseEntity<PaymentAcceptedResponse> paymentValidationRequest(
+	public ResponseEntity<PaymentAcceptedResponse> validatePaymentRequest(
 			@RequestBody PaymentInitiationRequest paymentInitiationRequest,
 			@RequestHeader(value = "Signature", required = true) String signature,
 			@RequestHeader(value = "SignatureCertificate", required = true) String signatureCertificate,
-			@RequestHeader(value = "XRequestId", required = true) String xRequestId) throws  GeneralSecurityException, IOException 
-			  {
+			@RequestHeader(value = "XRequestId", required = true) String xRequestId)
+			throws GeneralSecurityException, IOException {
 
-		PaymentAcceptedResponse response = sandboxValidationService.paymentValidationRequest(paymentInitiationRequest,
+		PaymentAcceptedResponse response = sandboxValidationService.validatePaymentRequest(paymentInitiationRequest,
 				signature, signatureCertificate, xRequestId);
 		HttpHeaders headers = new HttpHeaders();
 
-		headers.add("Signature", new String(Base64.encodeBase64(generateSignature(response).sign())));
-		headers.add("Signature-Certificate", signatureCertificate);
-		headers.add("X-Request-Id", xRequestId);
+		headers.add(Headers.Signature.name(), new String(Base64.encodeBase64(generateSignature(response).sign())));
+		headers.add(Headers.SignatureCertificate.name(), signatureCertificate);
+		headers.add(Headers.XRequestId.name(), xRequestId);
 
 		return ResponseEntity.status(HttpStatus.CREATED).headers(headers).body(response);
 	}

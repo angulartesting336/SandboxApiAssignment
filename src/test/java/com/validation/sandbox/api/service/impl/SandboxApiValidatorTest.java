@@ -14,22 +14,22 @@ import com.validation.sandbox.api.model.PaymentAcceptedResponse;
 import com.validation.sandbox.api.model.PaymentInitiationRequest;
 
 @ExtendWith(MockitoExtension.class)
-public class SandboxApiValidationServiceImplTests {
+public class SandboxApiValidatorTest {
 
 	@InjectMocks
-	private SandboxValidationServiceImpl sandboxApiValidationServiceImpl;
+	private SandboxApiValidator sandboxApiValidationServiceImpl;
 
 	@Mock
-	CertificateNameValidatorServiceImpl certificateNameValidatorServiceImpl;
+	CertificateNameValidator certificateNameValidator;
 
 	@Mock
-	SignatureVerificationServiceImpl signatureVerificationServiceImpl;
+	SignatureValidator signatureValidator;
 
 	@Mock
-	PaymentRequestValidatonServiceImpl paymentRequestValidatonServiceImpl;
+	PaymentRequestValidator paymentRequestValidator;
 
 	@Mock
-	LimitExceededValidationServiceimpl limitExceededValidationServiceimpl;
+	LimitExceededValidator limitExceededValidator;
 
 	private PaymentInitiationRequest paymentInitiationRequest = null;
 
@@ -63,20 +63,21 @@ public class SandboxApiValidationServiceImplTests {
 
 		expected.setStatus("Accepted");
 
-		Mockito.lenient().doNothing().when(certificateNameValidatorServiceImpl)
-				.validateCertificateName(signatureCertificate);
+		Mockito.lenient().doNothing().when(certificateNameValidator).validateCertificateName(signatureCertificate,
+				signature, xRequestId);
 
-		Mockito.lenient().doNothing().when(signatureVerificationServiceImpl).validateSignature(paymentInitiationRequest,
-				signature, signatureCertificate, xRequestId);
+		Mockito.lenient().doNothing().when(signatureValidator).validateSignature(paymentInitiationRequest, signature,
+				signatureCertificate, xRequestId);
 
-		Mockito.lenient().doNothing().when(paymentRequestValidatonServiceImpl)
-				.validatePaymentRequest(paymentInitiationRequest, "signatureCertificate");
+		Mockito.lenient().doNothing().when(paymentRequestValidator).validatePaymentRequest(paymentInitiationRequest,
+				"signatureCertificate", signature, xRequestId);
 
-		Mockito.lenient().doNothing().when(limitExceededValidationServiceimpl).checkLimitExceeded(
-				paymentInitiationRequest.getAmount(), paymentInitiationRequest.getDebtorIBAN(), "signatureCertificate");
+		Mockito.lenient().doNothing().when(limitExceededValidator).checkLimitExceeded(
+				paymentInitiationRequest.getAmount(), paymentInitiationRequest.getDebtorIBAN(), "signatureCertificate",
+				signature, xRequestId);
 
-		PaymentAcceptedResponse actual = sandboxApiValidationServiceImpl.paymentValidationRequest(
-				paymentInitiationRequest, signature, signatureCertificate, "29318e25-cebd-498c-888a-f77672f66449");
+		PaymentAcceptedResponse actual = sandboxApiValidationServiceImpl
+				.validatePaymentRequest(paymentInitiationRequest, signature, signatureCertificate, xRequestId);
 
 		assertEquals(expected.getStatus(), actual.getStatus());
 

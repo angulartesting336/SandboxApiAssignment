@@ -1,7 +1,6 @@
 package com.validation.sandbox.api.service.impl;
 
 import static org.junit.Assert.assertThrows;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
@@ -19,58 +18,38 @@ import org.springframework.core.io.ClassPathResource;
 
 import com.google.common.io.Files;
 import com.validation.sandbox.api.exception.InvalidCertificateException;
-import com.validation.sandbox.api.model.PaymentRejectedResponse;
 
 @ExtendWith(MockitoExtension.class)
-public class CertificateNameValidatorServiceImplTests {
+public class CertificateNameValidatorTest {
 
 	@InjectMocks
-	private CertificateNameValidatorServiceImpl certificateNameValidatorServiceImpl;
-
-	private String UNKNOWN_CN = null;
-
-	private String UNKNOWN_CERTIFICATE = null;
-
-	private String REJECTED = null;
+	private CertificateNameValidator certificateNameValidator;
 
 	@BeforeEach
 	public void setUp() {
-		UNKNOWN_CN = "UNKNOWN_CERTIFICATE";
-
-		UNKNOWN_CERTIFICATE = "Got rejected due to Unknown Certificate CN";
-
-		REJECTED = "Rejected";
 
 	}
 
 	@Test
 	public void validCertificateNameTest() throws IOException, GeneralSecurityException {
 
-		CertificateNameValidatorServiceImpl certificateNameValidatorServiceImpl = mock(
-				CertificateNameValidatorServiceImpl.class);
+		CertificateNameValidator certificateNameValidator = mock(CertificateNameValidator.class);
 		final ClassPathResource classPathResource = new ClassPathResource("SignatureCertificate.txt");
 		String signatureCertificate = Files.toString(classPathResource.getFile(), Charset.defaultCharset());
 
-		Mockito.lenient().doNothing().when(certificateNameValidatorServiceImpl)
-				.validateCertificateName(signatureCertificate);
+		Mockito.lenient().doNothing().when(certificateNameValidator).validateCertificateName(signatureCertificate,
+				"signature", "xRequestId");
 	}
 
 	@Test
 	public void invalidCertificateNameTest() throws CertificateException, IOException {
 
-		PaymentRejectedResponse expected = new PaymentRejectedResponse();
-
-		expected.setReason(UNKNOWN_CERTIFICATE);
-		expected.setReasonCode(UNKNOWN_CN);
-		expected.setStatus(REJECTED);
-
 		final ClassPathResource classPathResource = new ClassPathResource("UnknownCertificate.txt");
 		String unknownCertificate = Files.toString(classPathResource.getFile(), Charset.defaultCharset());
 
-		InvalidCertificateException actual = assertThrows(InvalidCertificateException.class,
-				() -> certificateNameValidatorServiceImpl.validateCertificateName(unknownCertificate));
+		assertThrows(InvalidCertificateException.class,
+				() -> certificateNameValidator.validateCertificateName(unknownCertificate, "signature", "xRequestId"));
 
-		assertEquals(expected, actual.getPaymentRejectedResponse());
 	}
 
 }

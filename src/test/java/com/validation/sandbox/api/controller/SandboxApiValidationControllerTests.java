@@ -84,7 +84,7 @@ public class SandboxApiValidationControllerTests {
 
 		String paymentInitiationRequestJSON = gson.toJson(paymentInitiationRequest);
 
-		when(sandboxValidationService.paymentValidationRequest(paymentInitiationRequest, signature,
+		when(sandboxValidationService.validatePaymentRequest(paymentInitiationRequest, signature,
 				signatureCertificate, "29318e25-cebd-498c-888a-f77672f66449")).thenReturn(paymentAcceptedResponse);
 
 		MockHttpServletResponse response = mvc
@@ -107,7 +107,7 @@ public class SandboxApiValidationControllerTests {
 
 		String paymentInitiationRequestJSON = gson.toJson(paymentInitiationRequest);
 
-		when(sandboxValidationService.paymentValidationRequest(paymentInitiationRequest, signature,
+		when(sandboxValidationService.validatePaymentRequest(paymentInitiationRequest, signature,
 				signatureCertificate, "29318e25-cebd-498c-888a-f77672f66449")).thenThrow(InvalidRequestException.class);
 
 		assertThrows(NestedServletException.class, () -> mvc
@@ -128,7 +128,7 @@ public class SandboxApiValidationControllerTests {
 
 		String paymentInitiationRequestJSON = gson.toJson(paymentInitiationRequest);
 
-		when(sandboxValidationService.paymentValidationRequest(paymentInitiationRequest, signature,
+		when(sandboxValidationService.validatePaymentRequest(paymentInitiationRequest, signature,
 				signatureCertificate, "29318e25-cebd-498c-888a-f77672f66449"))
 						.thenThrow(InvalidCertificateException.class);
 
@@ -150,7 +150,7 @@ public class SandboxApiValidationControllerTests {
 
 		String paymentInitiationRequestJSON = gson.toJson(paymentInitiationRequest);
 
-		when(sandboxValidationService.paymentValidationRequest(paymentInitiationRequest, signature,
+		when(sandboxValidationService.validatePaymentRequest(paymentInitiationRequest, signature,
 				signatureCertificate, "29318e25-cebd-498c-888a-f77672f66449"))
 						.thenThrow(InvalidSignatureException.class);
 
@@ -172,7 +172,7 @@ public class SandboxApiValidationControllerTests {
 
 		String paymentInitiationRequestJSON = gson.toJson(paymentInitiationRequest);
 
-		when(sandboxValidationService.paymentValidationRequest(paymentInitiationRequest, signature,
+		when(sandboxValidationService.validatePaymentRequest(paymentInitiationRequest, signature,
 				signatureCertificate, "29318e25-cebd-498c-888a-f77672f66449")).thenThrow(RuntimeException.class);
 
 		assertThrows(NestedServletException.class, () -> mvc

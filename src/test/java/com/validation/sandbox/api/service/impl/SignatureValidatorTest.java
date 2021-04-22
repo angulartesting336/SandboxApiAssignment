@@ -18,7 +18,7 @@ import com.google.common.io.Files;
 import com.validation.sandbox.api.model.PaymentInitiationRequest;
 
 @ExtendWith(MockitoExtension.class)
-public class SignatureVerificationServiceImplTests {
+public class SignatureValidatorTest {
 
 	private PaymentInitiationRequest paymentInitiationRequest = null;
 
@@ -44,14 +44,13 @@ public class SignatureVerificationServiceImplTests {
 	@Test
 	public void verifiedSignatureTest() throws CertificateException, GeneralSecurityException, IOException {
 
-		SignatureVerificationServiceImpl signatureVerificationServiceImpl = mock(
-				SignatureVerificationServiceImpl.class);
+		SignatureValidator signatureValidator = mock(SignatureValidator.class);
 
 		final ClassPathResource classPathResource = new ClassPathResource("signatureCertificate.txt");
 		String signatureCertificate = Files.toString(classPathResource.getFile(), Charset.defaultCharset());
 
-		Mockito.lenient().doNothing().when(signatureVerificationServiceImpl).validateSignature(paymentInitiationRequest,
-				signature, signatureCertificate, xRequestId);
+		Mockito.lenient().doNothing().when(signatureValidator).validateSignature(paymentInitiationRequest, signature,
+				signatureCertificate, xRequestId);
 	}
 
 }

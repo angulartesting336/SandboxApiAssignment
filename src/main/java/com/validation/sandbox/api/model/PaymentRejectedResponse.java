@@ -10,5 +10,17 @@ public class PaymentRejectedResponse {
 	private String reason;
 
 	private String reasonCode;
+	
+	public PaymentRejectedResponse() {
+		
+	}
+	
+	public PaymentRejectedResponse(String status,String reason,String reasonCode) {
+		
+		this.status=status;
+		this.reason=reason;
+		this.reasonCode=reasonCode;
+		
+	}
 
 }

@@ -9,11 +9,18 @@ public class InvalidSignatureException extends RuntimeException {
 
 	private String signatureCertificate;
 
-	public InvalidSignatureException(PaymentRejectedResponse paymentRejectedResponse, String signatureCertificate) {
+	private String signature;
+
+	private String xRequestId;
+
+	public InvalidSignatureException(PaymentRejectedResponse paymentRejectedResponse, String signatureCertificate,
+			String signature, String xRequestId) {
 
 		super();
 		this.paymentRejectedResponse = paymentRejectedResponse;
+		this.signature = signature;
 		this.signatureCertificate = signatureCertificate;
+		this.xRequestId = xRequestId;
 	}
 
 	public PaymentRejectedResponse getPaymentRejectedResponse() {
@@ -24,4 +31,11 @@ public class InvalidSignatureException extends RuntimeException {
 		return signatureCertificate;
 	}
 
+	public String getSignature() {
+		return signature;
+	}
+
+	public String getXRequestId() {
+		return xRequestId;
+	}
 }

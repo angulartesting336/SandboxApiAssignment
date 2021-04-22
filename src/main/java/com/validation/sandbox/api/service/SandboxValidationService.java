@@ -8,7 +8,7 @@ import com.validation.sandbox.api.model.PaymentInitiationRequest;
 
 public interface SandboxValidationService {
 
-	public PaymentAcceptedResponse paymentValidationRequest(PaymentInitiationRequest paymentInitiationRequest,
+	public PaymentAcceptedResponse validatePaymentRequest(PaymentInitiationRequest paymentInitiationRequest,
 			String signature, String signatureCertificate, String xRequestId) throws IOException, GeneralSecurityException;
 
 }
