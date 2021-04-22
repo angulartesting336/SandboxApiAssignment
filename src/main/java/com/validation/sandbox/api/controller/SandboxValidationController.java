@@ -19,8 +19,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.validation.sandbox.api.model.PaymentAcceptedResponse;
 import com.validation.sandbox.api.model.PaymentInitiationRequest;
-import com.validation.sandbox.api.model.ResponseDTO;
 import com.validation.sandbox.api.service.SandboxValidationService;
 
 @RestController
@@ -30,47 +30,46 @@ public class SandboxValidationController {
 	@Autowired
 	SandboxValidationService sandboxValidationService;
 
-	String RSA_CONSTANT = "RSA"; 
-	
-	String SHA_CONSTANT = "SHA256withRSA"; 
+	String RSA_CONSTANT = "RSA";
+
+	String SHA_CONSTANT = "SHA256withRSA";
 
 	@PostMapping(value = "/v1.0.0/initiate-payment")
-	public ResponseEntity<Object> paymentValidationRequest(
+	public ResponseEntity<PaymentAcceptedResponse> paymentValidationRequest(
 			@RequestBody PaymentInitiationRequest paymentInitiationRequest,
 			@RequestHeader(value = "Signature", required = true) String signature,
 			@RequestHeader(value = "SignatureCertificate", required = true) String signatureCertificate,
-			@RequestHeader(value = "XRequestId", required = true) String xRequestId)
-			throws IOException, GeneralSecurityException {
+			@RequestHeader(value = "XRequestId", required = true) String xRequestId) throws  GeneralSecurityException, IOException 
+			  {
 
-		ResponseDTO response = sandboxValidationService.paymentValidationRequest(paymentInitiationRequest, signature,
-				signatureCertificate, xRequestId);
+		PaymentAcceptedResponse response = sandboxValidationService.paymentValidationRequest(paymentInitiationRequest,
+				signature, signatureCertificate, xRequestId);
 		HttpHeaders headers = new HttpHeaders();
 
-		KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance(RSA_CONSTANT);
-		keyPairGen.initialize(2048);
-		KeyPair pair = keyPairGen.generateKeyPair();
-
-		PrivateKey privKey = pair.getPrivate();
-		Signature sign = Signature.getInstance(SHA_CONSTANT);
-
-		sign.initSign(privKey);
-
-		JSONObject json = new JSONObject(response.getResponse());
-
-		byte[] bytes = json.toString().getBytes();
-		sign.update(bytes);
-
-		headers.add("Signature", new String(Base64.encodeBase64(sign.sign())));
+		headers.add("Signature", new String(Base64.encodeBase64(generateSignature(response).sign())));
 		headers.add("Signature-Certificate", signatureCertificate);
 		headers.add("X-Request-Id", xRequestId);
 
-		return ResponseEntity.status(getHttpStatus(response.getStatusCode())).headers(headers)
-				.body(response.getResponse());
+		return ResponseEntity.status(HttpStatus.CREATED).headers(headers).body(response);
 	}
 
-	public HttpStatus getHttpStatus(String statusCode) {
+	public Signature generateSignature(Object obj) throws GeneralSecurityException {
 
-		return HttpStatus.valueOf(statusCode);
+		KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance(RSA_CONSTANT);
+		keyPairGen.initialize(2048);
+		KeyPair keyPair = keyPairGen.generateKeyPair();
+
+		PrivateKey privKey = keyPair.getPrivate();
+		Signature signature = Signature.getInstance(SHA_CONSTANT);
+
+		signature.initSign(privKey);
+
+		JSONObject json = new JSONObject(obj);
+
+		byte[] bytes = json.toString().getBytes();
+		signature.update(bytes);
+
+		return signature;
 
 	}
 

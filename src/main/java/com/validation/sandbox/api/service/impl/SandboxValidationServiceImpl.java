@@ -1,133 +1,66 @@
 package com.validation.sandbox.api.service.impl;
 
-import java.security.cert.CertificateException;
-import java.util.Optional;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.validation.sandbox.api.model.PaymentAcceptedResponse;
 import com.validation.sandbox.api.model.PaymentInitiationRequest;
-import com.validation.sandbox.api.model.PaymentRejectedResponse;
-import com.validation.sandbox.api.model.ResponseDTO;
 import com.validation.sandbox.api.service.SandboxValidationService;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class SandboxValidationServiceImpl implements SandboxValidationService {
 
 	@Autowired
-	ValidateCertificateNameServiceImpl validateCertificateNameServiceImpl;
+	CertificateNameValidatorServiceImpl certificateNameValidatorServiceImpl;
 
 	@Autowired
-	ValidateSignatureServiceImpl validateSignatureServiceImpl;
+	SignatureVerificationServiceImpl signatureVerificationServiceImpl;
 
 	@Autowired
-	ValidateRequestServiceImpl validateRequestServiceImpl;
+	PaymentRequestValidatonServiceImpl paymentRequestValidatonServiceImpl;
 
 	@Autowired
-	LimitExceededCheckServiceimpl limitExceededCheckServiceimpl;
+	LimitExceededValidationServiceimpl limitExceededValidationServiceimpl;
 
 	String ACCEPTED = "Accepted";
 
-	String CREATED = "CREATED";
-
-	String LIMIT_EXCEEDED = "Got rejected due to Amount limit exceeded";
-
-	String UNPROCESSABLE_ENTITY = "UNPROCESSABLE_ENTITY";
-
-	String REQUEST_VALIDATE = "Got rejected due to IBAN or Amount validation failed";
-
-	String BAD_REQUEST = "BAD_REQUEST";
-
-	String SIGNATURE_VALIDATION = "Got rejected due to signature validation failed";
-
-	String UNKNOWN_CERTIFICATE = "Got rejected due to Unknown Certificate CN";
-
-	String COMMON_ERROR = "something went wrong on the application,please try again later";
-
-	String GENERAL_ERROR = "GENERAL_ERROR";
-
-	String INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR";
-
-	String REJECTED = "Rejected";
-	
-	private static Logger log = LoggerFactory.getLogger(SandboxValidationServiceImpl.class);
 
 	@Override
-	public ResponseDTO paymentValidationRequest(PaymentInitiationRequest paymentInitiationRequest, String signature,
-			String signatureCertificate, String xRequestId) throws CertificateException {
+	public PaymentAcceptedResponse paymentValidationRequest(PaymentInitiationRequest paymentInitiationRequest,
+			String signature, String signatureCertificate, String xRequestId) throws IOException, GeneralSecurityException
+			 {
 
-		ResponseDTO responseDTO = new ResponseDTO();
+		log.info("Certificate Name Validation begins");
+		certificateNameValidatorServiceImpl.validateCertificateName(signatureCertificate);
+		log.info("Successfully validated the certificate Name");
+		
+		log.info("Signature verification begins");
+		signatureVerificationServiceImpl.validateSignature(paymentInitiationRequest, signature, signatureCertificate,
+				xRequestId);
+		log.info("Successfully verified the Signature ");
+		
+		log.info("Payment Request validation begins");
+		paymentRequestValidatonServiceImpl.validatePaymentRequest(paymentInitiationRequest, signatureCertificate);
+		log.info("Successfully validated the incoming payment request ");
+		
+		log.info("Checking whether provided amount limit is exceeded or not");
+		limitExceededValidationServiceimpl.checkLimitExceeded(paymentInitiationRequest.getAmount(),
+				paymentInitiationRequest.getDebtorIBAN(), signatureCertificate);
+		log.info("Provided amount limit is not exceeded");
+		
+		PaymentAcceptedResponse paymentAcceptedResponse = new PaymentAcceptedResponse();
+		paymentAcceptedResponse.setPaymentId((UUID.randomUUID()).toString());
+		paymentAcceptedResponse.setStatus(ACCEPTED);
 
-		try {
+		return paymentAcceptedResponse;
 
-			PaymentAcceptedResponse paymentAcceptedResponse = null;
-
-		Optional<String> value = Optional.ofNullable(validateCertificateNameServiceImpl.validateCertificateName(signatureCertificate));
-
-			if (!value.isPresent()) {
-
-				value = Optional.ofNullable(validateSignatureServiceImpl.validateSignature(paymentInitiationRequest, signature,
-						signatureCertificate, xRequestId));
-
-				if (!value.isPresent()) {
-					value = Optional.ofNullable(validateRequestServiceImpl.validateRequest(paymentInitiationRequest));
-					if (!value.isPresent()) {
-
-						value = Optional.ofNullable(limitExceededCheckServiceimpl.checkLimitExceeded(paymentInitiationRequest.getAmount(),
-								paymentInitiationRequest.getDebtorIBAN()));
-						if (!value.isPresent()) {
-							paymentAcceptedResponse = new PaymentAcceptedResponse();
-							paymentAcceptedResponse.setPaymentId((UUID.randomUUID()).toString());
-							paymentAcceptedResponse.setStatus(ACCEPTED);
-							responseDTO = createResponseDTOObj(paymentAcceptedResponse, CREATED);
-						} else {
-							responseDTO = createRejectedResponseObj(value.get(), LIMIT_EXCEEDED, UNPROCESSABLE_ENTITY);
-						}
-
-					} else {
-						responseDTO = createRejectedResponseObj(value.get(), REQUEST_VALIDATE, BAD_REQUEST);
-					}
-				} else {
-					responseDTO = createRejectedResponseObj(value.get(), SIGNATURE_VALIDATION, BAD_REQUEST);
-				}
-			} else {
-				responseDTO = createRejectedResponseObj(value.get(), UNKNOWN_CERTIFICATE, BAD_REQUEST);
-
-			}
-		} catch (Exception ex) {
-
-			log.error(COMMON_ERROR, ex);
-			responseDTO = createRejectedResponseObj(GENERAL_ERROR, COMMON_ERROR, INTERNAL_SERVER_ERROR);
-		}
-
-		return responseDTO;
-
-	}
-
-	private ResponseDTO createRejectedResponseObj(String value, String reason, String statusCode) {
-
-		PaymentRejectedResponse paymentRejectedResponse = new PaymentRejectedResponse();
-
-		paymentRejectedResponse.setReason(reason);
-		paymentRejectedResponse.setReasonCode(value);
-		paymentRejectedResponse.setStatus(REJECTED);
-
-		return createResponseDTOObj(paymentRejectedResponse, statusCode);
-
-	}
-
-	private ResponseDTO createResponseDTOObj(Object paymentResponse, String statusCode) {
-
-		ResponseDTO responseDTO = new ResponseDTO();
-
-		responseDTO.setResponse(paymentResponse);
-		responseDTO.setStatusCode(statusCode);
-
-		return responseDTO;
 	}
 
 }

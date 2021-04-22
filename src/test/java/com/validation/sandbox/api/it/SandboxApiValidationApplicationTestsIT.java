@@ -29,7 +29,6 @@ public class SandboxApiValidationApplicationTestsIT {
 	@Autowired
 	private TestRestTemplate restTemplate;
 
-
 	private PaymentInitiationRequest paymentInitiationRequest = null;
 
 	@BeforeEach
@@ -37,11 +36,10 @@ public class SandboxApiValidationApplicationTestsIT {
 
 		paymentInitiationRequest = new PaymentInitiationRequest();
 
-
 	}
 
 	@Test
-	public void paymentValidationRequestSuccessfulTest() throws Exception {
+	public void paymentValidationSuccessfulTest() throws Exception {
 
 		paymentInitiationRequest.setAmount("1.00");
 		paymentInitiationRequest.setCreditorIBAN("NL94ABNA1008270121");
@@ -63,7 +61,7 @@ public class SandboxApiValidationApplicationTestsIT {
 	}
 
 	@Test
-	public void paymentValidationRequestUnknownCertificateTest() throws Exception {
+	public void paymentValidationInvalidCertificateTest() throws Exception {
 
 		paymentInitiationRequest.setAmount("1.00");
 		paymentInitiationRequest.setCreditorIBAN("NL94ABNA1008270121");
@@ -84,10 +82,10 @@ public class SandboxApiValidationApplicationTestsIT {
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
 	}
-	
+
 	@Test
-	public void paymentValidationRequestSignatureValidationFailedTest() throws Exception {
-		
+	public void paymentValidationInvalidSignatureTest() throws Exception {
+
 		paymentInitiationRequest.setAmount("1.00");
 		paymentInitiationRequest.setCreditorIBAN("NL94ABNA1008270121");
 		paymentInitiationRequest.setDebtorIBAN("NL02RABO7134384212");
@@ -104,15 +102,12 @@ public class SandboxApiValidationApplicationTestsIT {
 
 		ResponseEntity<Object> response = restTemplate.exchange("/paymentValidation/v1.0.0/initiate-payment",
 				HttpMethod.POST, entity, Object.class);
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);	
-		
-		
-		
-		
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
 	}
 
 	@Test
-	public void paymentValidationRequestFailedTest() throws Exception {
+	public void paymentValidationInvalidIBANRequestTest() throws Exception {
 
 		paymentInitiationRequest.setAmount("1.00");
 		paymentInitiationRequest.setCreditorIBAN("NLNL94ABNA1008270121");
@@ -135,7 +130,30 @@ public class SandboxApiValidationApplicationTestsIT {
 	}
 
 	@Test
-	public void paymentValidationRequestLimitExceededTest() throws Exception {
+	public void paymentValidationInvalidAmountTest() throws Exception {
+
+		paymentInitiationRequest.setAmount("abc");
+		paymentInitiationRequest.setCreditorIBAN("NLNL94ABNA1008270121");
+		paymentInitiationRequest.setDebtorIBAN("NL02RABO7134384551");
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+		headers.set("Signature",
+				"AlFr/WbYiekHmbB6XdEO/7ghKd0n6q/bapENAYsL86KoYHqa4eP34xfH9icpQRmTpH0qOkt1vfUPWnaqu+vHBWx/gJXiuVlhayxLZD2w41q8ITkoj4oRLn2U1q8cLbjUtjzFWX9TgiQw1iY0ezpFqyDLPU7+ZzO01JI+yspn2gtto0XUm5KuxUPK24+xHD6R1UZSCSJKXY1QsKQfJ+gjzEjrtGvmASx1SUrpmyzVmf4qLwFB1ViRZmDZFtHIuuUVBBb835dCs2W+d7a+icGOCtGQbFcHvW0FODibnY5qq8v5w/P9i9PSarDaGgYb+1pMSnF3p8FsHAjk3Wccg2a1GQ==");
+		headers.set("SignatureCertificate",
+				"-----BEGIN CERTIFICATE-----MIIDBDCCAm2gAwIBAgIJAK8dGINfkSTHMA0GCSqGSIb3DQEBBQUAMGAxCzAJBgNVBAYTAlVTMQswCQYDVQQIEwJDQTEWMBQGA1UEBxMNTW91bnRhaW4gVmlldzETMBEGA1UEChMKR29vZ2xlIEluYzEXMBUGA1UEAxMOd3d3Lmdvb2dsZS5jb20wHhcNMDgxMDA4MDEwODMyWhcNMDkxMDA4MDEwODMyWjBgMQswCQYDVQQGEwJVUzELMAkGA1UECBMCQ0ExFjAUBgNVBAcTDU1vdW50YWluIFZpZXcxEzARBgNVBAoTCkdvb2dsZSBJbmMxFzAVBgNVBAMTDnd3dy5nb29nbGUuY29tMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDQUV7ukIfIixbokHONGMW9+ed0E9X4m99I8upPQp3iAtqIvWs7XCbAbGqzQH1qX9Y00hrQ5RRQj8OI3tRiQs/KfzGWOdvLpIk5oXpdT58tg4FlYh5fbhIoVoVn4GvtSjKmJFsoM8NRtEJHL1aWd++dXzkQjEsNcBXwQvfDb0YnbQIDAQABo4HFMIHCMB0GA1UdDgQWBBSm/h1pNY91bNfW08ac9riYzs3cxzCBkgYDVR0jBIGKMIGHgBSm/h1pNY91bNfW08ac9riYzs3cx6FkpGIwYDELMAkGA1UEBhMCVVMxCzAJBgNVBAgTAkNBMRYwFAYDVQQHEw1Nb3VudGFpbiBWaWV3MRMwEQYDVQQKEwpHb29nbGUgSW5jMRcwFQYDVQQDEw53d3cuZ29vZ2xlLmNvbYIJAK8dGINfkSTHMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQEFBQADgYEAYpHTr3vQNsHHHUm4MkYcDB20a5KvcFoXgCcYtmdyd8rh/FKeZm2me7eQCXgBfJqQ4dvVLJ4LgIQiU3R5ZDe0WbW7rJ3M9ADQFyQoRJP8OIMYW3BoMi0Z4E730KSLRh6kfLq4rK6vw7lkH9oynaHHWZSJLDAp17cPj+6znWkN9/g=-----END CERTIFICATE-----");
+		headers.set("XRequestId", "29318e25-cebd-498c-888a-f77672f66449");
+
+		HttpEntity<PaymentInitiationRequest> entity = new HttpEntity<>(paymentInitiationRequest, headers);
+
+		ResponseEntity<Object> response = restTemplate.exchange("/paymentValidation/v1.0.0/initiate-payment",
+				HttpMethod.POST, entity, Object.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
+	}
+
+	@Test
+	public void paymentValidationLimitExceededTest() throws Exception {
 
 		paymentInitiationRequest.setAmount("1.00");
 		paymentInitiationRequest.setCreditorIBAN("NL94ABNA1008270121");
@@ -158,7 +176,7 @@ public class SandboxApiValidationApplicationTestsIT {
 	}
 
 	@Test
-	public void paymentValidationRequestGeneralErrorTest() throws Exception {
+	public void paymentValidationGeneralErrorTest() throws Exception {
 
 		paymentInitiationRequest.setAmount("1.00");
 		paymentInitiationRequest.setCreditorIBAN("NL94ABNA1008270121");
